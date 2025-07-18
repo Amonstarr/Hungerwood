@@ -6,7 +6,7 @@ using TMPro;
 public class SelectionManager : MonoBehaviour
 {
     public GameObject interaction_Info_UI;
-    public float interactionDistance = 3f;
+    public float interactionDistance = 8f;
     public Transform player;
 
     TextMeshProUGUI interaction_text;
@@ -32,16 +32,21 @@ public class SelectionManager : MonoBehaviour
 
                 if (distance <= interactionDistance)
                 {
-                    // Tampilkan nama objek di UI
                     interaction_text.text = interactable.GetItemName();
                     interaction_Info_UI.SetActive(true);
 
-                    // Jika objek bertag "Item", bisa diambil saat klik
                     if (selectionTransform.CompareTag("Item") && Input.GetKeyDown(KeyCode.Mouse0))
                     {
-                        Debug.Log($"{interactable.GetItemName()} picked up!");
-                        Destroy(interactable.gameObject);
-                        interaction_Info_UI.SetActive(false);
+                        if (InventorySystem.Instance.CheckIfFull())
+                        {
+                            Debug.Log("Inventory is Full");
+                        }
+                        else
+                        {
+                            InventorySystem.Instance.AddToInventory(interactable.ItemName);
+                            Destroy(interactable.gameObject);
+                            interaction_Info_UI.SetActive(false);
+                        }
                     }
                 }
                 else
