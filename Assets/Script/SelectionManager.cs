@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 
 public class SelectionManager : MonoBehaviour
 {
@@ -9,11 +10,22 @@ public class SelectionManager : MonoBehaviour
     public float interactionDistance = 8f;
     public Transform player;
 
-    TextMeshProUGUI interaction_text;
+    private TextMeshProUGUI interaction_text;
+    public Image centerDotImage;
+    public Image handIcon;
 
     private void Start()
     {
-        interaction_text = interaction_Info_UI.GetComponent<TextMeshProUGUI>();
+        interaction_text = interaction_Info_UI.GetComponentInChildren<TextMeshProUGUI>();
+
+        if (interaction_text == null)
+        {
+            Debug.LogError("TextMeshProUGUI not found in interaction_Info_UI");
+        }
+
+        interaction_Info_UI.SetActive(false);
+        if (handIcon != null) handIcon.gameObject.SetActive(false);
+        if (centerDotImage != null) centerDotImage.gameObject.SetActive(true);
     }
 
     void Update()
@@ -35,6 +47,19 @@ public class SelectionManager : MonoBehaviour
                     interaction_text.text = interactable.GetItemName();
                     interaction_Info_UI.SetActive(true);
 
+                    // Ganti ikon saat melihat objek yang bisa diambil
+                    if (selectionTransform.CompareTag("Item"))
+                    {
+                        centerDotImage.gameObject.SetActive(false);
+                        handIcon.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        handIcon.gameObject.SetActive(false);
+                        centerDotImage.gameObject.SetActive(true);
+                    }
+
+                    // Ambil item jika klik kiri
                     if (selectionTransform.CompareTag("Item") && Input.GetKeyDown(KeyCode.Mouse0))
                     {
                         if (InventorySystem.Instance.CheckIfFull())
@@ -46,22 +71,31 @@ public class SelectionManager : MonoBehaviour
                             InventorySystem.Instance.AddToInventory(interactable.ItemName);
                             Destroy(interactable.gameObject);
                             interaction_Info_UI.SetActive(false);
+                            handIcon.gameObject.SetActive(false);
+                            centerDotImage.gameObject.SetActive(true);
                         }
                     }
                 }
                 else
                 {
-                    interaction_Info_UI.SetActive(false);
+                    HideUI();
                 }
             }
             else
             {
-                interaction_Info_UI.SetActive(false);
+                HideUI();
             }
         }
         else
         {
-            interaction_Info_UI.SetActive(false);
+            HideUI();
         }
+    }
+
+    void HideUI()
+    {
+        interaction_Info_UI.SetActive(false);
+        if (handIcon != null) handIcon.gameObject.SetActive(false);
+        if (centerDotImage != null) centerDotImage.gameObject.SetActive(true);
     }
 }

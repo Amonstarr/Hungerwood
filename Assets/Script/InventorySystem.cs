@@ -1,11 +1,11 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class InventorySystem : MonoBehaviour
 {
-
     public static InventorySystem Instance { get; set; }
 
     public GameObject inventoryScreenUI;
@@ -16,6 +16,10 @@ public class InventorySystem : MonoBehaviour
     public bool isOpen;
     public bool isFull;
 
+    // Pickup Pop Up
+    public GameObject pickupAlert;
+    public TextMeshProUGUI pickupName;
+    public Image pickupImage;
 
     private void Awake()
     {
@@ -29,14 +33,12 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
-
     void Start()
     {
         isOpen = false;
         isFull = false;
         PopulateSlotList();
     }
-
 
     private void PopulateSlotList()
     {
@@ -49,18 +51,13 @@ public class InventorySystem : MonoBehaviour
         }
     }
 
-
     void Update()
     {
-
         if (Input.GetKeyDown(KeyCode.I) && !isOpen)
         {
-
-            Debug.Log("i is pressed");
             inventoryScreenUI.SetActive(true);
             Cursor.lockState = CursorLockMode.None;
             isOpen = true;
-
         }
         else if (Input.GetKeyDown(KeyCode.I) && isOpen)
         {
@@ -79,6 +76,47 @@ public class InventorySystem : MonoBehaviour
         itemToAdd = Instantiate(Resources.Load<GameObject>(itemName), whatSlotToEquip.transform.position, whatSlotToEquip.transform.rotation);
         itemToAdd.transform.SetParent(whatSlotToEquip.transform);
         itemList.Add(itemName);
+
+        // Ambil sprite jika ada
+        Sprite itemSprite = null;
+        Image imageComponent = itemToAdd.GetComponent<Image>();
+        if (imageComponent != null)
+        {
+            itemSprite = imageComponent.sprite;
+        }
+
+        TriggerPickupPopUp(itemName, itemSprite);
+        ReCalculateList();
+        CraftingSystem.Instance.RefreshNeededItems();
+    }
+
+    void TriggerPickupPopUp(string itemName, Sprite itemSprite)
+    {
+        if (pickupAlert != null)
+        {
+            pickupAlert.SetActive(true);
+            pickupName.text = itemName;
+
+            if (itemSprite != null)
+            {
+                pickupImage.sprite = itemSprite;
+                pickupImage.enabled = true;
+            }
+            else
+            {
+                pickupImage.enabled = false;
+            }
+
+            // Auto-hide popup
+            StopAllCoroutines();
+            StartCoroutine(HidePickupPopupAfterDelay(2f));
+        }
+    }
+
+    IEnumerator HidePickupPopupAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        pickupAlert.SetActive(false);
     }
 
     private GameObject FindNextEmptySlot()
@@ -90,9 +128,8 @@ public class InventorySystem : MonoBehaviour
                 return slot;
             }
         }
-        return new GameObject(); // Jika tidak ada slot kosong
+        return new GameObject(); // jika tidak ada slot kosong
     }
-
 
     public bool CheckIfFull()
     {
@@ -101,53 +138,40 @@ public class InventorySystem : MonoBehaviour
         {
             if (slot.transform.childCount > 0)
             {
-                counter += 1;
+                counter++;
             }
         }
-
-        if (counter == 21)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return counter >= 21;
     }
-
 
     public void RemoveItem(string nameToRemove, int amountToRemove)
     {
         int counter = amountToRemove;
-        for (var i = slotList.Count - 1; i >= 0; i--)
+        for (int i = slotList.Count - 1; i >= 0; i--)
         {
             if (slotList[i].transform.childCount > 0)
             {
-                if (slotList[i].transform.GetChild(0).name == nameToRemove + "(Clone)" && counter != 0)
+                if (slotList[i].transform.GetChild(0).name == nameToRemove + "(Clone)" && counter > 0)
                 {
                     Destroy(slotList[i].transform.GetChild(0).gameObject);
-                    counter -= 1;
+                    counter--;
                 }
             }
         }
     }
 
-
     public void ReCalculateList()
     {
+        itemList.Clear(); // perbaikan agar tidak dobel
+
         foreach (GameObject slot in slotList)
         {
             if (slot.transform.childCount > 0)
             {
-                string name = slot.transform.GetChild(0).name; //Stone (Clone)
-                string str2 = "(Clone)";
-                string result = name.Replace(str2, "");
-
+                string name = slot.transform.GetChild(0).name; // contoh: "Stone(Clone)"
+                string result = name.Replace("(Clone)", "").Trim();
                 itemList.Add(result);
-
             }
         }
     }
-
- 
 }

@@ -75,13 +75,14 @@ public class CraftingSystem : MonoBehaviour
         }
 
         StartCoroutine(calculate());
-        RefreshNeededItems();
+        //RefreshNeededItems();
     }
 
     public IEnumerator calculate()
     {
         yield return new WaitForSeconds(1f);
         InventorySystem.Instance.ReCalculateList();
+        RefreshNeededItems();
     }
 
     void Update()
@@ -107,7 +108,7 @@ public class CraftingSystem : MonoBehaviour
         }
     }
 
-    private void RefreshNeededItems()
+    public void RefreshNeededItems()
     {
         int stone_count = 0;
         int stick_count = 0;
@@ -130,6 +131,13 @@ public class CraftingSystem : MonoBehaviour
         AxeReq1.text = "3 Stones [" + stone_count + "]";
         AxeReq2.text = "3 Sticks [" + stick_count + "]";
 
-        craftAxeBTN.gameObject.SetActive(stone_count >= 3 && stick_count >= 3);
+        if (stone_count >= 3 && stick_count >= 3)
+        {
+            craftAxeBTN.gameObject.SetActive(true);
+        }
+        else
+        {
+            craftAxeBTN.gameObject.SetActive(false);
+        }
     }
 }
